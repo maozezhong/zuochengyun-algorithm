@@ -1,0 +1,180 @@
+/*
+题目：换钱的方法数
+Tips:
+	1.在本质上记忆化搜索方法等价于动态规划问题；
+	2.记忆化搜索的方法就是不关系到达某一个递归过程的路径，只是单纯的对计算过的递归过程进行记录；
+	3.动态规划则是规定好每一个递归过程的计算顺序，一次进行计算，后计算的过程严格依赖前面计算过的过程。
+	4.记忆化搜索的好处：对于不可能出现的情况是不会去进行计算的；坏处：任然是递归，在工程上开销比较大
+	5.动态规划的好处：顺序计算；坏处：不管情况是否出现都要进行计算;
+	6.比如nums=[20000,10000,1000],target=2000000000,动态规划要严格计算3*200000000个位置，而记忆化则不需要计算一些不可能出现的情况比如百位为1-9的钱数
+*/
+#include<iostream>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思想：
+		递归，比如给你的nums是[5,10,25,1],target是100
+		1）用0张5，用剩下的[10,25,1]来找零100（递归）
+		2）用1张5，用剩下的[10,25,1]来找零95（递归）
+		......
+		i）用20张5，用剩下的[10,25,1]来找零0（递归）
+	*/
+	int Coins(vector<int> nums, int target)
+	{
+		if (nums.size() == 0 || target < 0)
+			return 0;
+		return Coins_core(nums, 0, target);
+	}
+	int Coins_core(vector<int> nums, int index, int target)
+	{
+		int res = 0;
+		if (index == nums.size())
+			res = target == 0 ? 1 : 0;
+		else
+		{
+			for (int i = 0; i*nums[index] <= target; i++)
+				res += Coins_core(nums, index + 1, target - i*nums[index]);
+		}
+		return res;
+	}
+
+	//------------------------------------------------------------------------
+	/*
+	思想：
+		在递归的基础上进行优化，记忆搜索化优化方式
+		因为Coins_core中nums是不变的，所以可以定义p(index, target)表示一个递归过程
+		用memory二维数组将递归过程的结果记录下来
+	复杂度：
+		时间：O(N*target^2)
+	*/
+	int Coins_improve(vector<int> nums, int target)
+	{
+		if (nums.size() == 0 || target < 0)
+			return 0;
+		vector<vector<int>> memory(nums.size()+1, vector<int>(target+1));//注意初始化的时候多留一个空位的大小
+		return Coins_core_improve(nums, 0, target, memory);
+	}
+
+	int Coins_core_improve(vector<int> nums, int index, int target, vector<vector<int>> &memory)
+	{
+		int res = 0;
+		if (index == nums.size())
+			res = target == 0 ? 1 : 0;
+		else
+		{
+			int value = 0;
+			for (int i = 0; i*nums[index] <= target; i++)
+			{
+				value = memory[index + 1][target - i*nums[index]];
+				if (value != 0)
+					res += value == -1 ? 0 : value;
+				else
+					res += Coins_core_improve(nums, index + 1, target - i*nums[index], memory);
+			}
+			memory[index][target] = res == 0 ? -1 : res;
+		}
+		return res;
+	}
+
+
+	//------------------------------------------------------------------------
+	/*
+	思想：
+	构造dp数组，dp[i][j]表示用arr[0...i]的任意货币能找j块钱的最小张数
+	dp维度为[arr.size(), target+1]
+	复杂度：
+	时间：O(N*target)
+	空间：O(N*target)
+	*/
+	int Coins1(vector<int> arr, int target)
+	{
+		int length = arr.size();
+		if (length == 0 || target < 0)
+			return 0;
+		if (target == 0)
+			return 1;
+		vector<vector<int>> dp(length, vector<int>(target + 1));
+		
+		//初始化第一行
+		dp[0][0] = 1;
+		for (int j = 1; j <= target; j++)
+		{
+			if (j - arr[0] >= 0 && dp[0][j - arr[0]] != 0)
+				dp[0][j] = 1;
+		}
+		
+		//初始化第一列
+		for (int i = 0; i < length; i++)
+			dp[i][0] = 1;
+
+		int left = 0;
+		for (int i = 1; i < length; i++)
+		{
+			for (int j = 1; j <= target; j++)
+			{
+				left = 0;
+				if (j - arr[i] >= 0 && dp[i][j - arr[i]] != 0)
+					left = dp[i][j - arr[i]];
+				dp[i][j] = dp[i - 1][j] + left;
+			}
+		}
+
+		return dp[length - 1][target];
+	}
+
+	//------------------------------------------------------------------------
+	/*
+	思路：
+	优化minCoin1，由于每一行的更新只依赖上一行，所以只用一行的额外空间就够了
+	复杂度：
+	时间：O(N*target)
+	空间：O(target)
+	*/
+	int Coins2(vector<int> arr, int target)
+	{
+		int length = arr.size();
+		if (length == 0 || target < 0)
+			return 0;
+		vector<int> dp(target + 1, 0);
+		//初始化第一行
+		dp[0] = 1;
+		for (int j = 1; j <= target; j++)
+		{
+			if (j - arr[0] >= 0 && dp[j - arr[0]] != 0)
+				dp[j] = 1;
+		}
+
+		int left = 0;
+		for (int i = 1; i < length; i++)
+		{
+			dp[0] = 1;
+			for (int j = 1; j <=target; j++)
+			{
+				left = 0;
+				if (j - arr[i] >= 0 && dp[j - arr[i]] != 0)
+					left = dp[j - arr[i]];
+				dp[j] = dp[j] + left;
+			}
+
+		}
+
+		return dp[target];
+	}
+};
+
+int main()
+{
+	int arr[] = { 5, 10, 25, 1 };
+	//int arr[] = { 3, 5 };
+	int count_ = sizeof(arr) / sizeof(int);
+	vector<int> test(arr, arr + count_);
+	int aim = 15;
+	Solution s;
+	int res = s.Coins_improve(test, aim);
+	cout << res << endl;
+	cout << endl;
+}
