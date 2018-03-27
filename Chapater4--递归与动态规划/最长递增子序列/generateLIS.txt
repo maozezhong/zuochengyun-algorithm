@@ -1,0 +1,128 @@
+/*
+题目：最长递增子序列
+TIP：
+	考虑以i为结尾的最长递增子序列
+*/
+#include<iostream>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思想：
+		1.构造dp数组，dp[i]表示以i为结尾的最长递增子序列的长度（可优化）
+		2.根据dp得到最长递增子序列
+	算法复杂度：
+		时间：O(N^2)，生成dp，二分优化后为O(N*logN)
+	*/
+	vector<int> generateLIS(vector<int> nums)
+	{
+		if (nums.size() <= 1)
+			return nums;
+		vector<int> dp = getDp_binary(nums);//得到dp数组，dp[i]表示以i为结尾的最长递增子序列的长度
+		return maxUpCore(nums, dp);
+	}
+
+	vector<int> getDp(vector<int> nums)
+	{
+		vector<int> dp(nums.size());
+		dp[0] = 1;
+		for (int i = 1; i < nums.size(); i++)
+		{
+			//找0到i-1位置中比nums[i]小且dp值最大的数
+			for (int j = 0; j < i; j++)
+			{
+				if (nums[j] < nums[i])
+					dp[i] = max(dp[i], dp[j]+1);
+			}
+			dp[i] = dp[i] == 0 ? 1 : dp[i];
+		}
+		return dp;
+	}
+
+	//ends数组：对有效区域上的位置b，ends[b]=c表示遍历到当前为止，在所有长度为b+1的递增子序列中最小的结尾书为c
+	//O(N*logN)
+	vector<int> getDp_binary(vector<int> nums)
+	{
+		vector<int> dp(nums.size());
+		vector<int> ends(nums.size());
+		int right = 0;
+		ends[0] = nums[0];
+		dp[0] = 1;
+		for (int i = 1; i < nums.size(); i++)
+		{
+			//二分查找找到从左到右第一个比所给值大或者等于的位置
+			int index = getIndex(ends, right, nums[i]);
+			if (index == -1)
+			{
+				ends[++right] = nums[i];
+				dp[i] = right + 1;
+			}
+			else
+			{
+				ends[index] = nums[i];
+				dp[i] = index + 1;
+			}
+		}
+
+		return dp;
+	}
+
+	//二分查找
+	int getIndex(vector<int> ends, int end, int target)
+	{
+		int start = 0;
+		while (start <= end)
+		{
+			int mid = start + (end - start) / 2;
+			if (ends[mid] < target)
+				start = mid+1;
+			else if (ends[mid] >= target && mid - 1 >= 0 && ends[mid - 1] >= target)
+				end = mid - 1; 
+			else
+				return mid;
+		}
+		return -1;
+	}
+
+
+	vector<int> maxUpCore(vector<int> nums, vector<int> dp)
+	{
+		vector<int> res;
+		//step1：找到dp中最大的数的位置
+		int max_index = 0;
+		for (int i = 1; i < dp.size(); i++)
+			if (dp[i]>dp[max_index])
+				max_index = i;
+
+		res.push_back(nums[max_index]);
+		
+		//step2：从最大数位置向左移动，若nums[i]比nums[max_index]小且dp[i]=dp[max_index]-1，则最大递增子序列的倒数第二个数位nums[i]
+		//迭代进行
+		for (int i = max_index - 1; i >= 0; i--)
+		{
+			if (dp[i] == dp[max_index] - 1 && nums[i] < nums[max_index])
+			{
+				res.push_back(nums[i]);
+				max_index = i;
+			}
+		}
+		
+		reverse(res.begin(), res.end());
+		return res;
+	}
+};
+
+int main()
+{
+	int arr[] = { 5, 10, 25, 1 };
+	int count_ = sizeof(arr) / sizeof(int);
+	vector<int> test(arr, arr + count_);
+	Solution s;
+	vector<int> res = s.generateLIS(test);
+	for (int i : res)
+		cout << i << endl;
+	cout << endl;
+}
