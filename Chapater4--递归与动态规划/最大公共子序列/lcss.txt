@@ -1,0 +1,101 @@
+/*
+最长公共子序列
+*/
+#include<iostream>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+	
+	/*
+	构建dp数组，dp[i][j]表示str1[0...i]与str2[0...j]中的最长公共子序列的长度
+	*/
+	//longest common sub-string
+	vector<char> lcss(string str1, string str2)
+	{
+		vector<char> res;
+		if(str1.size()==0||str2.size()==0)
+			return res;
+		vector<vector<int>> dp = getDp(str1, str2);
+		//通过dp获得最长公共子序列
+		res = getLcss(dp, str1, str2);
+		return res;
+	}
+
+	vector<vector<int>> getDp(string str1, string str2)
+	{
+		vector<vector<int>> dp(str1.size(), vector<int>(str2.size()));
+		//初始化第一列
+		bool flag = false;
+		for(int i=0;i<dp.size();i++)
+		{
+			dp[i][0] = flag ? 1 : 0;
+			if(str1[i]==str2[0])
+			{
+				dp[i][0] = 1;
+				flag = true;
+			}
+		}
+		//初始化第一行
+		flag = false;
+		for(int j=1;j<dp[0].size();j++)
+		{
+			dp[0][j] = flag ? 1:0;
+			if(str1[0]==str2[j])
+			{
+				dp[0][j] = 1;
+				flag = true;
+			}
+		}
+		//继续填值，从dp[i-1][j]，dp[i][j-1]，以及如果str1[i]==str2[j]的话,dp[i-1][j-1]+1，这三个数中取最大
+		for(int i=1;i<dp.size();i++)
+		{
+			for(int j=1;j<dp[0].size();j++)
+			{
+				if(str1[i]==str2[j])
+					dp[i][j] = max(max(dp[i-1][j],dp[i][j-1]), dp[i-1][j-1]+1);
+				else
+					dp[i][j] =max(dp[i-1][j],dp[i][j-1]);
+			}
+		}
+		return dp;
+	}
+
+	/*
+		从dp数组最右下角开始遍历，只能往左，右，左上角三个方向走
+		1）如果dp[i][j] = dp[i-1][j]， 则往上走i--
+		2）如果dp[i][j] = dp[i][j-1]，则往左边走j--
+		3）如果dp[i][j] = dp[i-1][j-1]+1，则往坐上角走，且记录
+	*/
+	vector<char> getLcss(vector<vector<int>> dp, string str1, string str2)
+	{
+		vector<char> res(dp[str1.size()-1][str2.size()-1]);
+		int i=dp.size()-1, j=dp[0].size()-1;
+		int index = res.size()-1;
+		while(index>=0)
+		{
+			if(i>0 && dp[i][j]==dp[i-1][j]){
+				i--;
+			}else if(j>0 && dp[i][j]==dp[i][j-1]){
+				j--;
+			}else{
+				res[index--] = str1[i];
+				i--;
+				j--;
+			}
+			
+		}
+		return res;
+	}
+};
+
+int main()
+{
+	Solution s;
+	string str1 = "1A2C3D4B56", str2="B1D23CA45B6A";
+	vector<char> res = s.lcss(str1, str2);
+	for(int i=0;i<res.size();i++)
+		cout<<res[i]<<endl;
+	return 0;
+}
