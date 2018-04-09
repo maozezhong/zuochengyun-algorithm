@@ -1,0 +1,101 @@
+/*
+题目：最小编辑代价
+*/
+
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思路：dp
+		1）构建dp数组，在开头分别加个' '，dp[i][j]表示str1[0..i]编辑为str2[0...j]的编辑代价
+		2）分别初始化第一行（加），第一列（减）
+		3）对于dp[i][j]，看其左边，右边和左上方，dp[i][j]取四种情况中的最小值
+			i）若str1[i-1] == str2[j-1]，dp[i][j]可能为dp[i-1][j-1] //判断str1[i-1] == str2[j-1]是因为在构建dp的时候字符串开头都加了个' '
+			ii）若str1[i-1] != str2[j-1]，dp[i][j]可能为dp[i-1][j-1]加上替换的代价
+			iii）dp[i][j]可能为dp[i-1][j]+删除的代价
+			iv）dp[i][j]可能为dp[i][j-1]+增加的代价
+	复杂度：
+		时间：O(N*M)
+		空间：O(N*M)
+	*/
+	int minEdit(string str1, string str2, int ic, int dc, int rc)
+	{
+		vector<vector<int>> dp(str1.size()+1, vector<int>(str2.size()+1));
+		//第一行
+		for(int j=1;j<str2.size()+1;j++)
+			dp[0][j] = j*ic;
+		//第一列
+		for(int i=1;i<str1.size()+1;i++)
+			dp[i][0] = i*dc;
+		//dp[i][j]
+		for(int i=1;i<str1.size()+1;i++)
+		{
+			for(int j=1;j<str2.size()+1;j++)
+			{
+				//情况i,ii
+				if(str1[i-1]==str2[j-1])
+					dp[i][j] = dp[i-1][j-1];
+				else
+					dp[i][j] = dp[i-1][j-1]+rc; //加上替换
+				dp[i][j] = min(dp[i][j], dp[i-1][j]+dc);//加上删除
+				dp[i][j] = min(dp[i][j], dp[i][j-1]+ic);//加上插入
+			}
+		}
+		return dp[str1.size()][str2.size()];
+	}
+
+	//用空间压缩的方法优化minEdit，当前的dp[i][j]只跟左边，右边，左上角有关，需要一个临时变量记录左上角的值，一个临时变量记录未更新的dp[i][j]
+	int minEdit_advanced(string str1, string str2, int ic, int dc, int rc)
+	{
+		if(str1.size()==0||str2.size()==0)
+			return 0;
+		string long_ = str1.size()>=str2.size() ? str1 : str2;
+		string short_ = str1.size()<str2.size() ? str1 : str2;
+
+		//str2较长就交换ic和dc的值，加这个是因为题目要求的是将str1编辑为str2的最小代价
+		if(str2.size()>str1.size())
+		{
+			int temp = ic;
+			ic = dc;
+			dc = temp;
+		}
+		
+		vector<int> dp(short_.size()+1);
+		//第一行
+		for(int j=1;j<dp.size();j++)
+			dp[j] = j*ic;
+		//从第二行开始
+		for(int i=1;i<=long_.size();i++)
+		{
+			int pre = dp[0];//pre表示左上角的值
+			for(int j=1;j<=short_.size();j++)
+			{
+				int temp = dp[j];//将没更新前的dp保存下来
+				if(long_[i-1]==short_[j-1])
+					dp[j] = pre;
+				else
+					dp[j] = pre+rc;
+				dp[j] = min(dp[j], dp[j-1]+ic);
+				dp[j] = min(dp[j], temp+dc);
+				pre = temp;
+			}
+		}
+		return dp[dp.size()-1];
+	}
+};
+
+int main()
+{
+	Solution s;
+	string str1 = "abc";
+	string str2 = "adc";
+	int ic = 5;
+	int dc = 3;
+	int rc = 20;
+	cout<<s.minEdit_advanced(str1, str2,ic, dc, rc);
+	return 0;
+}
