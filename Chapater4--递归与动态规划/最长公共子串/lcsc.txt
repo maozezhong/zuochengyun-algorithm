@@ -1,0 +1,128 @@
+/*
+题目：最长公共子串问题
+*/
+
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思路：
+		经典dp，维护一个矩阵
+	复杂度：
+		时间：O(M*N)
+		空间：O(M*N)
+	*/
+	vector<char> lcsc(string str1, string str2)
+	{
+		vector<char> res;
+		if(str1.size()==0 || str2.size()==0)
+			return res;
+		vector<vector<int>> dp(str1.size(), vector<int>(str2.size()));
+		//第一行
+		for(int j=0;j<str2.size();j++)
+		{
+			if(str1[0]==str2[j])
+				dp[0][j] = 1;
+		}
+		//第一列
+		for(int i=1;i<str1.size();i++)
+		{
+			if(str1[i] == str2[0])
+				dp[i][0] = 1;
+		}
+
+		int max_ = INT_MIN, end = 0;
+		for(int i=1;i<str1.size();i++)
+		{
+			for(int j=1;j<str2.size();j++)
+			{
+				if(str1[i]==str2[j])
+				{
+					dp[i][j] = dp[i-1][j-1]+1;
+					if(dp[i][j]>max_)
+					{
+						max_ = dp[i][j];
+						end = j;
+					}
+				}
+				else
+					dp[i][j] = 0;
+			}
+		}
+
+		while(max_>=1)
+		{
+			res.push_back(str2[end]);
+			end--;
+			max_--;
+		}
+		reverse(res.begin(), res.end());
+		return res;
+	}
+
+	/*
+	思路：
+		优化lcsc，从右上角开始，按照斜线往右下角探索，维护一个全局end变量表示最大值索引
+	复杂度：
+		时间：O(M*N)
+		空间：O(1)
+	*/
+	vector<char> lcsc_advanced(string str1, string str2)
+	{
+		vector<char> res;
+		if(str1.size()==0 || str2.size()==0)
+			return res;
+		int row = 0;//起点开始的行
+		int col = str2.size()-1;//起点开始的列
+		int max_ = INT_MIN;
+		int end = 0;
+		while(row<str1.size())
+		{
+			int i = row;
+			int j = col;
+			int len = 0;
+			while(i<str1.size() && j<str2.size())
+			{
+				if(str1[i]==str2[j])
+				{
+					len++;
+					if(len>max_)
+					{
+						max_ = len;
+						end = j;
+					}
+				}
+				else
+					len = 0;
+				i++;
+				j++;
+			}
+			if(col>0)
+				col--;
+			else
+				row++;
+		}
+		while(max_>=1)
+		{
+			res.push_back(str2[end--]);
+			max_--;
+		}
+		reverse(res.begin(),res.end());
+		return res;
+	}
+};
+
+int main()
+{
+	Solution s;
+	string str1 = "1AB12345CD";
+	string str2 = "12345EF";
+	vector<char> res = s.lcsc_advanced(str1, str2);
+	for(int i=0;i<res.size();i++)
+		cout<<res[i]<<endl;
+	return 0;
+}
