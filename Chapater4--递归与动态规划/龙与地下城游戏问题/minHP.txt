@@ -1,0 +1,108 @@
+/*
+龙与地下城游戏
+dp：从右向左，从下到上
+*/
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思路：dp,dp[i][j]表示骑士如果要走上i，j的位置(还没走上！！)选择最优路径走到右下角起码需要具备的血量
+		1) dp[M-1][N-1] = 1-map[M-1][N-1]
+		2) 骑士有两种走法
+			ii）向右走，则dp[i][j]+map[i][j]=dp[i][j+1]，则dp[i][j] = max(dp[i][j+1]-map[i][j],1)
+			ii）向下走，则dp[i][j]+map[i][j]=dp[i+1][j]，则dp[i][j] = max(dp[i+1][j]-map[i][j],1)
+			iii）dp[i][j] = min(向下走，向右走)
+	复杂度：
+		时间：O(N*M)
+		空间：O(N*M)
+	*/
+	int minHP(vector<vector<int>> map)
+	{
+		int row = map.size();
+		int col = map[0].size();
+		vector<vector<int>> dp(row--, vector<int>(col--,0));
+		dp[row][col] = map[row][col] > 0 ? 1 : 1-map[row][col];
+		//最后一行
+		for(int j=col-1;j>=0;j--)
+			dp[row][j] = max(1, dp[row][j+1]-map[row][j]);
+		for(int i=row-1;i>=0;i--)
+		{
+			//最后一列
+			dp[i][col] = max(dp[i+1][col]-map[i][col], 1);
+			//dp[i][j]
+			for(int j=col-1;j>=0;j--)
+			{
+				int right = max(1, dp[i][j+1]-map[i][j]);
+				int down = max(1, dp[i+1][j]-map[i][j]);
+				dp[i][j] = min(right, down);
+			}
+		}
+		return dp[0][0];
+	}
+
+	/*
+	优化can，空间压缩，选择最短的那个作为长度初始化dp
+	复杂度：
+		1）时间：O(N*M)
+		2）空间：O(min(N,M))
+	*/
+	int minHP_advance(vector<vector<int>> map)
+	{
+		int more = max(map.size(), map[0].size());
+		int less = min(map.size(),map[0].size());
+		vector<int> dp(less);
+		bool rowmore = more==map.size();
+		int temp = map[map.size()-1][map[0].size()-1];
+		//初始化dp
+		dp[less-1] = temp>0 ? 1 : -temp+1;
+		int row = 0;
+		int col = 0;
+		for(int j=less-2;j>=0;j--)
+		{
+			row = rowmore ? more-1 : j;
+			col = rowmore ? j : more-1;
+			dp[j] = max(dp[j+1]-map[row][col],1);
+		}
+
+		int choosen1 = 0;
+		int choosen2 = 0;
+		for(int i=more-2;i>=0;i--)
+		{
+			row = rowmore ? i : less-1;
+			col = rowmore ? less-1 : i;
+			dp[less-1] = max(dp[less-1]-map[row][col],1);
+			for(int j=less-2;j>=0;j--)
+			{
+				row = rowmore ? i : j;
+				col = rowmore ? j : i;
+				choosen1 = max(dp[j]-map[row][col],1);
+				choosen2 = max(dp[j+1]-map[row][col],1);
+				dp[j] = min(choosen1, choosen2);
+			}
+		}
+		return dp[0];
+	}
+};
+
+int main()
+{
+	Solution s;
+	vector<vector<int>> maps;
+	int temp1[] = {-2,-3,3};
+	vector<int> temp_1(temp1, temp1+sizeof(temp1)/sizeof(int));
+	maps.push_back(temp_1);
+
+	int temp2[] = {-5,-10,1};
+	vector<int> temp_2(temp2, temp2+sizeof(temp2)/sizeof(int));
+	maps.push_back(temp_2);
+
+	int temp3[] = {0,30,-5};
+	vector<int> temp_3(temp3, temp3+sizeof(temp3)/sizeof(int));
+	maps.push_back(temp_3);
+	cout<<s.minHP(maps);
+	cout<<endl;
+	return 0;
+}

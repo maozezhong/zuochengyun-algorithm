@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	思路：dp,dp[i][j]表示aim[0...i+j-1]能否由str1[0...i-1]和str2[0...j-1]交叉组成
+		1）dp[0][0]为true，空串
+		2）第一列dp[1...i][0]，当aim[0...i-1]等于str1[0...i-1]的时候为true
+		3）第一行dp[0][0...j]，当aim[0...j-1]等于str2[0...j-1]的时候为true
+		4）dp[i][j]，i）当dp[i-1][j]为true且str1[i-1]==aim[i+j-1]的时候为true；ii）当dp[i][j-1]为true且str[j-1]==aim[i+j-1]的时候为true；其他为false
+	复杂度：
+		时间：O(N*M)
+		空间：O(N*M)
+	*/
+	bool isCross(string str1, string str2, string aim)
+	{
+		if(str1.size()+str2.size()!=aim.size())
+			return false;
+		vector<vector<bool>> dp(str1.size()+1, vector<bool>(str2.size()+1, false));
+		dp[0][0] = true;
+		//第一列
+		for(int i=1;i<dp.size();i++)
+		{
+			if(dp[i-1][0]==true && str1[i-1] == aim[i-1])
+				dp[i][0] = true;
+			else
+				dp[i][0] = false;
+		}
+		//第一行
+		for(int j=1;j<dp[0].size();j++)
+		{
+			if(dp[0][j-1]==true && str2[j-1]==aim[j-1])
+				dp[0][j] = true;
+			else
+				dp[0][j] = false;
+		}
+
+		for(int i=1;i<dp.size();i++)
+		{
+			for(int j=1;j<dp[0].size();j++)
+			{
+				if((dp[i-1][j]&&str1[i-1]==aim[i+j-1]) || (dp[i][j-1]&&str2[j-1]==aim[i+j-1]))
+					dp[i][j] = true;
+				else
+					dp[i][j] = false;
+			}
+		}
+
+		return dp[str1.size()][str2.size()];
+	}
+
+	/*
+	优化can，空间压缩
+	复杂度：
+		1）时间：O(N*M)
+		2）空间：O(min(N,M))
+	*/
+	bool isCross_advanced(string str1, string str2, string aim)
+	{
+		if(str1.size()+str2.size()!=aim.size())
+			return false;
+		string low = str1.size()<=str2.size() ? str1 : str2;
+		string high = str1.size()<=str2.size() ? str2 : str1;
+		vector<bool> dp(low.size()+1,false);
+
+		dp[0] = true;
+		//第一行
+		for(int j=1;j<dp.size();j++)
+		{
+			if(dp[j-1]&&low[j-1]==aim[j-1])
+				dp[j] = true;
+			else
+				break;
+		}
+
+		for(int i=1;i<high.size();i++)
+		{
+			dp[0] = dp[0] && (high[i-1]==aim[i-1]);
+			for(int j=1;j<dp.size();j++)
+			{
+				if( (dp[j-1]&&low[j-1]==aim[i+j-1]) || (dp[j]&&high[i-1]==aim[i+j-1]) )
+					dp[j] = true;
+				else
+					dp[j] = false;
+			}
+		}
+		return dp[low.size()];
+	}
+};
+
+int main()
+{
+	Solution s;
+	string aim = "AB12";
+	string str1 = "AB";
+	string str2 = "12";
+	cout<<s.isCross_advanced(str1, str2, aim);
+	cout<<endl;
+	return 0;
+}
