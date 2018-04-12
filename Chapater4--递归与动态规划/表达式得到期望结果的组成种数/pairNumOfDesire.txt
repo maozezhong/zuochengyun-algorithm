@@ -1,0 +1,135 @@
+/*
+
+*/
+#include<iostream>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+	/*
+	递归
+	时间：O(N!)
+	空间：O(N)
+	*/
+	int pairNumOfDesire(string s, bool desired)
+	{
+		if(!isValid(s))
+			return false;
+		return helper(s, 0, s.length()-1, desired);
+	}
+
+	int helper(string s, int start, int end, bool desired)
+	{
+		if(start==end)
+		{
+			if(s[start]=='1')
+				return desired ? 1 : 0;
+			else
+				return desired ? 0 : 1;
+		}
+		int res = 0;
+		//desired为true的情况
+		if(desired){
+			for(int i=start+1;i<end;i+=2)
+			{
+				switch (s[i])
+				{
+					case '^' : //左true的种数*右false的种数+左false的种数*右true的种数
+						res += helper(s, start, i-1, desired)*helper(s, i+1, end, !desired);
+						res += helper(s, i+1, end, desired)*helper(s, start, i-1, !desired);
+						break;
+					case '|' : //左true的种数*（右true的种数+右false的种数）+左false的种数*右边true的种数
+						res += helper(s, start, i-1, desired)*helper(s, i+1, end, desired);
+						res += helper(s, start, i-1, desired)*helper(s, i+1, end, !desired);
+						res += helper(s, start, i-1, !desired)*helper(s, i+1, end, desired);
+						break;
+					case '&' : //左true的种数*右true的种数
+						res += helper(s, start, i-1, desired)*helper(s, i+1, end, desired);
+						break;
+				}
+			}
+		}else{//desired为false
+			for(int i=start+1;i<end;i+=2)
+			{
+				switch (s[i]){
+				case '^' : //左true的种数*右true的种数+左false的种数*右false的种数
+					res += helper(s, start, i-1, !desired)*helper(s, i+1, end, !desired);
+					res += helper(s, start, i-1, desired)*helper(s, i+1, end, desired);
+					break;
+				case '|' : //左false*右false
+					res += helper(s, start, i-1, desired)*helper(s, i+1,end, desired);
+					break;
+				case '&' : //左false*右true+左true*右false+左false*右false
+					res += helper(s, start, i-1, desired)*helper(s, i+1, end, !desired);
+					res += helper(s, start, i-1, !desired)*helper(s, i+1, end, desired);
+					res += helper(s, start, i-1, desired)*helper(s, i+1, end, desired);
+					break;
+				}
+			}
+		}
+		return res;
+		
+	}
+	/*
+	判断表达式是否合法：
+		1）长度为奇数
+		2）偶数位置肯定是0后者1
+		3）奇数位置为逻辑符号
+	*/
+	bool isValid(string s)
+	{
+		if(s.length()%2==0)
+			return false;
+		for(int i=0;i<s.length()-2;i+=2)
+		{
+			if(s[i]!='0' && s[i]!='1')
+				return false;
+			if(s[i+1]!='^' && s[i+1]!='|' && s[i+1]!='&')
+				return false;
+		}
+		return true;
+	}
+
+	int pairNumOfDesire_dp(string s, bool desired)
+	{
+		if(s.length()==0)
+			return 0;
+		if(!isValid(s))
+			return 0;
+		vector<vector<int>> t(s.length(), vector<int>(s.length(), 0)); //t[j][i]为s[j...i]为true的排列种数
+		vector<vector<int>> f(s.length(), vector<int>(s.length(), 0)); //f[j][i]为s[j...i]为false的排列种数
+		t[0][0] = s[0]=='1' ? 1 : 0;
+		f[0][0] = s[0]=='1' ? 0 : 1;
+		for(int i=2;i<s.length();i+=2)
+		{
+			t[i][i] = s[i]=='1' ? 1 : 0;
+			f[i][i] = s[i] =='1' ? 0 : 1;
+			for(int j=i-2;j>=0;j-=2)
+			{
+				for(int k=j;k<i;k+=2)
+				{
+					if(s[k+1]=='&'){
+						t[j][i] += t[j][k] * t[k+2][i];
+						f[j][i] += f[j][k] * (t[k+2][i]+f[k+2][i]) + t[j][k] * f[k+2][i];
+					}else if(s[k+1]=='|'){
+						t[j][i] += t[j][k]*(t[k+2][i]+f[k+2][i]) + f[j][k]*t[k+2][i];
+						f[j][i] += f[j][k]*f[k+2][i];
+					}else{
+						t[j][i] += t[j][k]*f[k+2][i] + f[j][k]*t[k+2][i];
+						f[j][i] += t[j][k]*t[k+2][i] + f[j][k]*f[k+2][i];
+					}
+				}
+			}
+		}
+		return desired ? t[0][s.length()-1] : f[0][s.length()-1];
+	}
+};
+
+int main()
+{
+	Solution s;
+	string ss = "1^0|0|1";
+	cout<<s.pairNumOfDesire_dp(ss, false)<<endl;
+	return 0;
+}
