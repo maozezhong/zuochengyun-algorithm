@@ -1,0 +1,122 @@
+/*
+排成一条线的纸牌博弈问题
+1) 暴力递归
+2) 优化递归
+3) dp
+*/
+#include<iostream>
+#include <iostream>
+#include<vector>
+using namespace std;
+
+class Solution{
+public :
+	/*
+	暴力递归
+	时间复杂度： 
+		O(2^N)
+	空间复杂度：
+		O(N)
+	*/
+	int pickCards(vector<int> cards)
+	{
+		int count_ = 0; //count_记录的是递归调用次数
+		if(cards.size()==0)
+			return 0;
+		return max(f(cards, 0, cards.size()-1, count_), s(cards, 0, cards.size()-1, count_));
+	}
+
+	//f表示cards[left...right]，你后拿能得到的最大分数
+	//既然前拿的人聪明绝顶，那么他肯定拿的是使得他之后最高的分数
+	int f(vector<int> cards, int left, int right, int& count_)
+	{
+		if(left==right) //只剩一张牌的情况，不好意思，你是后拿，拿不到了哦
+			return 0;
+		cout<<count_++<<endl;
+		return min(s(cards, left+1, right, count_),s(cards, left, right-1, count_));
+	}
+
+	//g表示cards[left...right]，你先拿能得到的最大分数
+	int s(vector<int> cards, int left, int right, int& count_)
+	{
+		if(left==right)
+			return cards[left];
+		cout<<count_++<<endl;
+		return max(cards[left]+f(cards, left+1, right, count_), cards[right]+f(cards, left, right-1, count_)); //挑最大
+	}
+
+	//----------------------------------------------------------------------------------
+
+	/*
+	dp，建立2个数组,f和s
+	f[i][j]表示函数f(cards, i,j)
+	s[i][j]表示函数s(cards, i, j)
+	时间复杂度：
+		O(N^2)
+	空间复杂度：
+		O(N^2)
+	*/
+	int pickCards_dp(vector<int> cards)
+	{
+		if(cards.size()==0)
+			return 0;
+		vector<vector<int>> f(cards.size(), vector<int>(cards.size()));
+		vector<vector<int>> s(cards.size(), vector<int>(cards.size()));
+		for(int j=0;j<cards.size();j++)
+		{
+			f[j][j] = cards[j];
+			for(int i=j-1;i>=0;i--)
+			{
+				f[i][j] = max(cards[i]+s[i+1][j], cards[j]+s[i][j-1]);
+				s[i][j] = min(f[i+1][j],f[i][j-1]);
+			}
+		}
+		return max(f[0][cards.size()-1], s[0][cards.size()-1]);
+	} 
+
+	//----------------------------------------------------------------------------------
+
+	/*
+	在暴力递归的基础上加入了记忆数组,减少重复计算
+	*/
+	int pickCards_advanced(vector<int> cards)
+	{
+		int count_ = 0; //count_记录的是递归调用次数
+		vector<vector<int>> ff(cards.size(), vector<int>(cards.size(), -1));
+		vector<vector<int>> ss(cards.size(), vector<int>(cards.size(), -1));
+		return max(f_advanced(cards, 0, cards.size()-1,ff, ss, count_), s_advanced(cards, 0, cards.size()-1, ff, ss, count_));
+	}
+
+	int f_advanced(vector<int> cards, int left, int right, vector<vector<int>> &ff, vector<vector<int>> &ss, int &count_)
+	{
+		if(left==right)
+			return cards[left];
+		cout<<count_++<<endl;
+		int f_left = ss[left+1][right]!=-1 ? ss[left+1][right] : s_advanced(cards, left+1, right, ff, ss, count_);
+		int f_right = ss[left][right-1]!=-1 ? ss[left][right-1] : s_advanced(cards, left, right-1, ff, ss, count_);
+		ff[left][right] = max(cards[left]+f_left, cards[right]+f_right);
+		return ff[left][right];
+	}
+
+	int s_advanced(vector<int> cards, int left, int right, vector<vector<int>> &ff, vector<vector<int>> &ss, int &count_)
+	{
+		if(left==right)
+			return 0;
+		cout<<count_++<<endl;
+		int s_left = ff[left+1][right]!=-1 ? ff[left+1][right] : f_advanced(cards, left+1, right, ff, ss, count_);
+		int s_right = ff[left][right-1]!=-1 ? ff[left][right-1] : f_advanced(cards, left, right-1, ff, ss, count_);
+		ss[left][right] = min(s_left, s_right);
+		return ss[left][right];
+	}
+
+};
+
+
+int main()
+{
+	Solution s;
+	int temp[] = {1,2,100,4};
+	vector<int> test(temp, temp+sizeof(temp)/sizeof(int));
+	cout<<s.pickCards(test);
+	return 0;
+}
