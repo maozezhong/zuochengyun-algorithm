@@ -1,0 +1,45 @@
+/*
+跳跃游戏
+*/
+#include<iostream>
+#include <iostream>
+#include<vector>
+using namespace std;
+
+class Solution{
+public :
+	/*
+	从左到右遍历nums，假设遍历到位置i
+		1）如果cur>=i, 说明跳jump步可以到达位置i， 此时什么也不做
+		2）如果cur<i，说明只跳jump步不能到达位置i，需要多跳一步才行，此时jump++，cur=next。表示多跳一步，cur更新成跳jump+1步能够到达的位置，即next
+		3）将next更新为max(next, i+nums[i])，表示多跳一步到达的最远位置
+	*/
+	int jump(vector<int> nums)
+	{
+		if(nums.size()==0)
+			return 0;
+		int cur = 0;
+		int jump = 0;
+		int next = 0;
+		for(int i=0;i<nums.size();i++)
+		{
+			if(cur<i)
+			{
+				jump++;
+				cur = next;
+			}
+			next = max(next, i+nums[i]);
+		}
+		return jump;
+	}
+};
+
+
+int main()
+{
+	Solution s;
+	int temp[] = {1,2,100,4};
+	vector<int> test(temp, temp+sizeof(temp)/sizeof(int));
+	cout<<s.jump(test);
+	return 0;
+}
