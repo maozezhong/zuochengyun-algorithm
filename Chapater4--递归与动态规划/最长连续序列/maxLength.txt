@@ -1,0 +1,61 @@
+/*
+数组中的最长连续序列
+map，O（N），O（N）
+*/
+#include<iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+class Solution{
+public:
+
+	/*
+	使用hashmap,key表示遍历过的某个数，value代表key这个数所在的最长连续序列的长度
+		1）遍历到arr[i]，如果map中已经存在，则跳过继续遍历下一个，若不存在，加入map，value为1，表示包含arr[i]的连续序列的长度为1
+		2）在map中搜索，如果存在arr[i]-1，则合并arr[i]-1和arr[i]；合并方式为通过map[arr[i]-1]找到最左点left，通过arr[i]得到最右点right，right-left得到len, 置map中的left的value为len， right为len
+		3）在map中搜索，如果存在arr[i]+1, 则合并arr[i]和arr[i]+1
+		4）全局维护一个max变量记录最长连续序列
+	复杂度：
+		时间：O(N)
+		空间：O(N)
+	*/
+
+	int maxLength(vector<int> arr)
+	{
+		if(arr.size()==0)
+			return 0;
+		map<int, int> tables;
+		int max_ = INT_MIN;
+		for(int i=0;i<arr.size();i++)
+		{
+			tables.insert(make_pair(arr[i],1));
+			if(tables.find(arr[i]-1)!=tables.end())
+				max_ = max(max_, merge(tables, arr[i]-1, arr[i]));
+			if(tables.find(arr[i]+1)!=tables.end())
+				max_ = max(max_, merge(tables, arr[i], arr[i]+1));
+		}
+		return max_;
+	}
+
+	int merge(map<int, int> &tables, int less, int more)
+	{
+		int left = less - tables.find(less)->second +1;
+		int right = more + tables.find(more)->second - 1;
+		int len = right-left+1;
+		tables.find(left)->second = len;
+		tables.find(right)->second = len;
+		return len;
+	}
+};
+
+int main()
+{
+	Solution s;
+	int temp[] = {100,4,200,1,3,2};
+	vector<int> test(temp, temp+sizeof(temp) / sizeof(int));
+	cout<<s.maxLength(test)<<endl;
+	getchar();
+	return 0;
+}
