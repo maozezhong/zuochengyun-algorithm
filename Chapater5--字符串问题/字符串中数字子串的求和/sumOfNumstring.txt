@@ -1,0 +1,70 @@
+/*
+判断两个字符串是否互为变形词
+*/
+#include<iostream>
+#include <map>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+	int sumOfNumstring(string str)
+	{
+		bool positive = true;
+		int res = 0;
+		int i = 0;
+		/*
+		1. 如果str[i]为数字，则i一直移动到不为数字位置，并同时生成数字字符串s
+		2. 设一个bool变量positive，如果出现负号positive = ！positive
+		*/
+		while(i<str.size())
+		{
+			string s = "";
+			
+			while(str[i]=='-')
+			{
+				positive = !positive;
+				i++;
+			}
+
+			if(str[i]<='9' && str[i]>='0')
+			{
+				s += str[i++];
+				while(i<str.size() && str[i]<='9' && str[i]>='0')
+					s += str[i++];
+			}else{
+				i++;
+				positive = true;
+			}
+			
+			if(!positive)
+				res -= getNum(s);
+			else
+				res += getNum(s);
+
+		}
+		return res;
+	}
+
+	int getNum(string s)
+	{
+		if(s.size()==0)
+			return 0;
+		int res = 0;
+		for(int i=0;i<s.size();i++)
+			res = 10*res + s[i] - '0';
+		return res;
+	}
+};
+
+int main()
+{
+	Solution s;
+	//string s1 = "A1.3";
+	//string s1 = "A-1BC--12";
+	//string s1 = "A1CD2E33";
+	string s1 = "A-1B--2C--D6E";
+	cout<<s.sumOfNumstring(s1);
+	getchar();
+	return 0;
+}

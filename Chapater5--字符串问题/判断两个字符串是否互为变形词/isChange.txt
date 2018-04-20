@@ -1,0 +1,62 @@
+/*
+判断两个字符串是否互为变形词
+*/
+#include<iostream>
+#include <map>
+#include <vector>
+using namespace std;
+
+class Solution{
+public:
+
+	bool isChange(string s1, string s2)
+	{
+		if(s1.size()!=s2.size())
+			return false;
+		map<char, int> tables;
+		for(int i=0;i<s1.size();i++)
+		{
+			if(tables.find(s1[i])!=tables.end())
+				tables.find(s1[i])->second++;
+			else
+				tables.insert(make_pair(s1[i],1));
+		}
+		for(int i=0;i<s2.size();i++)
+		{
+			if(tables.find(s2[i])!=tables.end())
+			{
+				tables.find(s2[i])->second--;
+				if(tables.find(s2[i])->second<0)
+					return false;
+			}
+			else
+				return false;
+		}
+		return true;
+	}
+
+	bool isChange2(string s1, string s2)
+	{
+		if(s1.size()!=s2.size())
+			return false;
+		vector<int> map(256, 0);
+		for(int i=0;i<s1.size();i++)
+			map[s1[i]]++;
+		for(int i=0;i<s2.size();i++)
+		{
+			if(map[s2[i]]-- == 0)
+				return false;
+		}
+		return true;
+	}
+};
+
+int main()
+{
+	Solution s;
+	string s1 = "1232";
+	string s2 = "2312";
+	cout<<s.isChange(s1,s2);
+	getchar();
+	return 0;
+}
