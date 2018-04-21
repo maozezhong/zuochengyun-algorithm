@@ -1,0 +1,48 @@
+/*
+去掉字符串中连续出现k个0的子串
+*/
+#include<iostream>
+using namespace std;
+
+class  Solution{
+public:
+	string deleteKzero(string str, int k)
+	{
+		if(k<=0 || k>str.size())
+			return str;
+		int start=-1, count=0;
+		int index = 0;
+		string res = "";
+		string temp = "";
+		while(index<str.size())
+		{
+			if(str[index]=='0'){
+				start = start==-1 ? index : start;
+				temp += '0';
+				count++;
+			}
+			else{
+				if(count!=k){
+					res += temp;
+					temp = "";
+				}
+				res += str[index];
+				start = -1;
+				count = 0;
+			}
+			index++;
+		}
+		return res;
+	}
+};
+
+int  main()
+{
+	Solution s;
+	string str = "A0000B000";
+	int k = 3;
+	string res = s.deleteKzero(str, k);
+	printf("%s", res.c_str());
+	system("pause");
+	return 0;
+}
